@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from aimacode.logic import PropKB
 from aimacode.planning import Action
 from aimacode.search import (
@@ -8,8 +10,6 @@ from lp_utils import (
     FluentState, encode_state, decode_state,
 )
 from my_planning_graph import PlanningGraph
-
-from functools import lru_cache
 
 
 class AirCargoProblem(Problem):
@@ -76,8 +76,8 @@ class AirCargoProblem(Problem):
                         effect_add = [expr("In({}, {})".format(c, p))]
                         effect_rem = [expr("At({}, {})".format(c, a))]
                         load = Action(expr("Load({}, {}, {})".format(c, p, a)),
-                                     [precond_pos, precond_neg],
-                                     [effect_add, effect_rem])
+                                      [precond_pos, precond_neg],
+                                      [effect_add, effect_rem])
                         loads.append(load)
 
             return loads
@@ -104,8 +104,8 @@ class AirCargoProblem(Problem):
                         effect_add = [expr("At({}, {})".format(c, a))]
                         effect_rem = [expr("In({}, {})".format(c, p))]
                         unload = Action(expr("Unload({}, {}, {})".format(c, p, a)),
-                                     [precond_pos, precond_neg],
-                                     [effect_add, effect_rem])
+                                        [precond_pos, precond_neg],
+                                        [effect_add, effect_rem])
                         unloads.append(unload)
             return unloads
 
@@ -228,6 +228,14 @@ class AirCargoProblem(Problem):
         """
         # TODO implement (see Russell-Norvig Ed-3 10.2.3  or Russell-Norvig Ed-2 11.2)
         count = 0
+
+        kb = PropKB()
+        kb.tell(decode_state(node.state, self.state_map).pos_sentence())
+
+        for action in self.goal:
+            if action not in kb.clauses:
+                count += 1
+
         return count
 
 
