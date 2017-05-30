@@ -310,6 +310,21 @@ class PlanningGraph():
         #   set iff all prerequisite literals for the action hold in S0.  This can be accomplished by testing
         #   to see if a proposed PgNode_a has prenodes that are a subset of the previous S level.  Once an
         #   action node is added, it MUST be connected to the S node instances in the appropriate s_level set.
+        action_set = set()
+
+        for action in self.all_actions:
+            current_state_set = self.s_levels[level]
+            pg_action = PgNode_a(action)
+            pg_action_precond_state_set = pg_action.prenodes
+            if pg_action_precond_state_set .issubset(current_state_set):
+                action_set.add(pg_action)
+                for state in current_state_set:
+                    if state in pg_action_precond_state_set:
+                        state.children.add(pg_action)
+                        pg_action.parents.add(state)
+
+        self.a_levels.append(action_set)
+
 
     def add_literal_level(self, level):
         """ add an S (literal) level to the Planning Graph
@@ -328,6 +343,24 @@ class PlanningGraph():
         #   may be "added" to the set without fear of duplication.  However, it is important to then correctly create and connect
         #   all of the new S nodes as children of all the A nodes that could produce them, and likewise add the A nodes to the
         #   parent sets of the S nodes
+
+        new_state_set = set()
+
+        previous_action_set = self.a_levels[level - 1]
+        for action in previous_action_set:
+            effect_state_set = action.effnodes
+            for effect_state in effect_state_set:
+                if effect_state in new_state_set:
+                    for new_state in new_state_set:
+                        if new_state == effect_state:
+                            effect_state = new_state
+                            break
+                else:
+                    new_state_set.add(effect_state)
+                effect_state.parents.add(action)
+                action.children.add(effect_state)
+
+        self.s_levels.append(new_state_set)
 
     def update_a_mutex(self, nodeset):
         """ Determine and update sibling mutual exclusion for A-level nodes
@@ -386,6 +419,14 @@ class PlanningGraph():
         :return: bool
         """
         # TODO test for Inconsistent Effects between nodes
+
+        for effect_add in node_a1.action.effect_add:
+            if effect_add in node_a2.action.effect_rem:
+                return True
+        for effect_add in node_a2.action.effect_add:
+            if effect_add in node_a1.action.effect_rem:
+                return True
+
         return False
 
     def interference_mutex(self, node_a1: PgNode_a, node_a2: PgNode_a) -> bool:
@@ -403,6 +444,20 @@ class PlanningGraph():
         :return: bool
         """
         # TODO test for Interference between nodes
+
+        for effect_add in node_a1.action.precond_pos:
+            if effect_add in node_a2.action.effect_rem:
+                return True
+        for effect_add in node_a2.action.precond_pos:
+            if effect_add in node_a1.action.effect_rem:
+                return True
+        for effect_add in node_a1.action.precond_neg:
+            if effect_add in node_a2.action.effect_add:
+                return True
+        for effect_add in node_a2.action.precond_neg:
+            if effect_add in node_a1.action.effect_add:
+                return True
+
         return False
 
     def competing_needs_mutex(self, node_a1: PgNode_a, node_a2: PgNode_a) -> bool:
@@ -417,6 +472,11 @@ class PlanningGraph():
         """
 
         # TODO test for Competing Needs between nodes
+        for node_a1_parent in node_a1.parents:
+            for node_a2_parent in node_a2.parents:
+                if node_a1_parent == node_a2_parent:
+                    return True
+
         return False
 
     def update_s_mutex(self, nodeset: set):
