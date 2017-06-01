@@ -537,7 +537,13 @@ class PlanningGraph():
         :return: bool
         """
         # TODO test for Inconsistent Support between nodes
-        return False
+
+        for s1_parent in node_s1.parents:
+            for s2_parent in node_s2.parents:
+                if not s1_parent.is_mutex(s2_parent):
+                    return False
+
+        return True
 
     def h_levelsum(self) -> int:
         """The sum of the level costs of the individual goals (admissible if goals independent)
@@ -547,4 +553,17 @@ class PlanningGraph():
         level_sum = 0
         # TODO implement
         # for each goal in the problem, determine the level cost, then add them together
+        # goal_set = set(self.problem.goal)
+        for goal in self.problem.goal:
+            is_found = False
+            for level in range(len(self.s_levels)):
+                for state in self.s_levels[level]:
+                    if goal == state.symbol and state.is_pos:
+                        level_sum += level
+                        is_found = True
+                        break
+
+                if is_found:
+                    break
+
         return level_sum
