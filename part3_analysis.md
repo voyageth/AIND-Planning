@@ -91,9 +91,9 @@ Unload(C1, P1, JFK)
 
 
 ## What was the best heuristic used in these problems? Was it better than non-heuristic search planning methods for all problems? Why or why not?
-- if need optimal solution : exclude depth-first.
-  - if Time elapsed is most important : choose a* with h_ignore_preconditions.
-  - if spatial efficiency is most important : choose a* with h_pg_levelsum.
-
-- if optimal is not important and Time elapsed & spatial efficiency is most important : depth-first.
-
+- If need optimal solution : exclude depth-first.
+  - If time elapsed is most important : choose a* with h_ignore_preconditions.
+  - If spatial efficiency is most important : choose astar_search h_pg_levelsum.
+- If optimal is not important and Time elapsed is most important : depth-first.
+  - So non-heuristic search(depth-first) can be chosen.
+  - It's very fast.
